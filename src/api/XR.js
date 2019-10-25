@@ -41,14 +41,6 @@ or navigator.xr.requestSession('inline') prior to requesting an immersive
 session. This is a limitation specific to the WebXR Polyfill and does not apply
 to native implementations of the API.`
 
-function isValidFeatureDescriptor(featureDescriptor) {
-  if (XRReferenceSpaceTypes.includes(featureDescriptor)) {
-    return true;
-  }
-
-  return false;
-}
-
 export default class XR extends EventTarget {
   /**
    * Receives a promise of an XRDevice, so that the polyfill
@@ -122,10 +114,7 @@ export default class XR extends EventTarget {
 
     let requirementsFailed = false;
     for (let feature of requestedOptions.requiredFeatures) {
-      if (!isValidFeatureDescriptor(feature)) {
-        console.error(`The required feature '${feature}' is not a valid feature descriptor`);
-        requirementsFailed = true;
-      } else if (!this[PRIVATE].device.isFeatureSupported(feature)) {
+      if (!this[PRIVATE].device.isFeatureSupported(feature)) {
         console.error(`The required feature '${feature}' is not supported`);
         requirementsFailed = true;
       } else {
@@ -138,9 +127,7 @@ export default class XR extends EventTarget {
     }
 
     for (let feature of requestedOptions.requiredFeatures) {
-      if (!isValidFeatureDescriptor(feature)) {
-        console.warning(`The optional feature '${feature}' is not a valid feature descriptor`);
-      } else if (!this[PRIVATE].device.isFeatureSupported(feature)) {
+      if (!this[PRIVATE].device.isFeatureSupported(feature)) {
         console.log(`The optional feature '${feature}' is not supported`);
       } else {
         enabledFeatures.add(feature);

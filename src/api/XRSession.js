@@ -24,6 +24,7 @@ import XRWebGLLayer from './XRWebGLLayer';
 import XRInputSourceEvent from './XRInputSourceEvent';
 import XRSessionEvent from './XRSessionEvent';
 import XRInputSourcesChangeEvent from './XRInputSourcesChangeEvent';
+import XRInputSourceArray, {UPDATE as UPDATE_INPUTSOURCES} from './XRInputSourceArray';
 
 export const PRIVATE = Symbol('@@webxr-polyfill/XRSession');
 
@@ -50,6 +51,7 @@ export default class XRSession extends EventTarget {
       id,
       activeRenderState: new XRRenderState(),
       pendingRenderState: null,
+      inputSourceArray: new XRInputSourceArray(),
       currentInputSources: []
     };
 
@@ -395,34 +397,36 @@ export default class XRSession extends EventTarget {
    * inputSource is found.
    */
   _checkInputSourcesChange() {
-    const added = [];
-    const removed = [];
-    const newInputSources = this.inputSources;
+    let added, removed;
+    const newInputSources = this[PRIVATE].device.getInputSources();
     const oldInputSources = this[PRIVATE].currentInputSources;
 
     for (const newInputSource of newInputSources) {
       if (!oldInputSources.includes(newInputSource)) {
+        if (!added) {
+          added = [];
+        }
         added.push(newInputSource);
       }
     }
 
     for (const oldInputSource of oldInputSources) {
       if (!newInputSources.includes(oldInputSource)) {
+        if (!removed) {
+          removed = [];
+        }
         removed.push(oldInputSource);
       }
     }
 
-    if (added.length > 0 || removed.length > 0) {
+    if (added || removed) {
+      this[PRIVATE].inputSourceArray[UPDATE_INPUTSOURCES](newInputSources);
+
       this.dispatchEvent('inputsourceschange', new XRInputSourcesChangeEvent('inputsourceschange', {
         session: this,
-        added: added,
-        removed: removed
+        added: Object.freeze(added || []),
+        removed: Object.freeze(removed || [])
       }));
-    }
-
-    this[PRIVATE].currentInputSources.length = 0;
-    for (const newInputSource of newInputSources) {
-      this[PRIVATE].currentInputSources.push(newInputSource);
     }
   }
 }
